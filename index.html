@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SaveSpree</title>
+    <!-- Favicon for standard browsers -->
+  <link rel="icon" type="image/png" href="assets/Untitled design[1].png" sizes="16x16">
+  <link rel="icon" type="image/png" href="assets/Untitled design[1].png" sizes="32x32">
+  
+  <!-- Larger icons for high-resolution displays and mobile devices -->
+  <link rel="icon" type="image/png" href="assets/Untitled design[1].png" sizes="48x48">
+  <link rel="icon" type="image/png" href="assets/Untitled design[1].png" sizes="64x64">
+  <link rel="icon" type="image/png" href="assets/Untitled design[1].png" sizes="192x192">
+  <link rel="apple-touch-icon" href="assets/Untitled design[1].png" sizes="180x180">
+  <link rel="icon" type="image/png" href="assets/Untitled design[1].png" sizes="512x512">
+
+  <!-- Default icon for older browsers -->
+  <link rel="shortcut icon" href="assets/Untitled design[1].png">
+     
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Lobster&display=swap"
+      rel="stylesheet"
+    />
+    <!-- SweetAlert2 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="loader.css" />
+
+    <!-- SweetAlert2 JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+      .nav-hidden {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-100">
+    <div id="loader" class="loader"></div>
+
+    <!-- Main Content Wrapper -->
+    <div id="content-wrapper">
+      <!-- Header -->
+      <header
+        class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex items-center justify-between sticky top-0 z-50 shadow-md"
+      >
+        <div class="flex items-center">
+          <button id="hamburgerButton" class="lg:hidden block text-white mr-4">
+            <span class="material-icons">menu</span>
+          </button>
+          <h1
+            class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-red-600"
+            style="font-family: 'Lobster', cursive; letter-spacing: 2px"
+          >
+            SaveSpree
+          </h1>
+        </div>
+        
+
+        <div class="flex items-center">
+          <a href="#" class="text-sm px-4">Settings</a>
+          <span class="material-icons">account_circle</span>
+        </div>
+      </header>
+
+      <div class="flex">
+        <!-- Side Navigation Bar -->
+        <nav
+          id="sidebar"
+          class="bg-gray-800 text-white h-screen w-64 p-6 fixed transform -translate-x-full lg:translate-x-0 transition-transform duration-300 lg:block shadow-lg"
+        >
+          <ul class="space-y-4">
+            <i>
+              <a href="#dashboard" class="smooth-scroll">
+                <span class="material-icons mr-3">dashboard</span>
+                Dashboard
+              </a>
+            </i>
+            <li>
+              <a href="#add-transaction" class="smooth-scroll">
+                <span class="material-icons mr-3">add_circle</span>
+                Add Transaction
+              </a>
+            </li>
+            <li>
+              <a href="#category-management" class="smooth-scroll">
+                <span class="material-icons mr-3">category</span>
+                Categories
+              </a>
+            </li>
+            <li>
+              <a href="#budget-tracking" class="smooth-scroll">
+                <span class="material-icons mr-3">attach_money</span>
+                Budget Tracking
+              </a>
+            </li>
+            <li>
+              <a href="#reports" class="smooth-scroll">
+                <span class="material-icons mr-3">bar_chart</span>Reports</a
+              >
+            </li>
+            <li>
+              <a href="#settings" class="smooth-scroll">
+                <span class="material-icons mr-3">settings</span>
+                Settings
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="ml-0 lg:ml-64 p-6 w-full transition-all duration-300">
+          <!-- Balance Overview -->
+          <section id="dashboard" class="mb-8">
+            <section id="dashboard" class="mb-8">
+              <div class="bg-white rounded-lg p-6 shadow-lg">
+                <h2
+                  class="text-3xl font-extrabold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600"
+                >
+                  Account Overview
+                </h2>
+                <div class="flex flex-wrap justify-between items-center">
+                  <div class="w-full sm:w-auto mb-4 sm:mb-0">
+                    <h3 class="text-xl font-semibold text-gray-700">
+                      Total Income
+                    </h3>
+                    <p
+                      class="text-green-500 text-3xl lg:text-4xl font-bold overflow-hidden text-overflow-ellipsis whitespace-nowrap"
+                    ></p>
+                  </div>
+                  <div class="w-full sm:w-auto mb-4 sm:mb-0">
+                    <h3 class="text-xl font-semibold text-gray-700">
+                      Total Expenses
+                    </h3>
+                    <p
+                      class="text-red-500 text-3xl lg:text-4xl font-bold overflow-hidden text-overflow-ellipsis whitespace-nowrap"
+                    ></p>
+                  </div>
+                  <div class="w-full sm:w-auto">
+                    <h3 class="text-xl font-semibold text-gray-700">
+                      Current Balance
+                    </h3>
+                    <p
+                      class="text-blue-500 text-3xl lg:text-4xl font-bold overflow-hidden text-overflow-ellipsis whitespace-nowrap"
+                    ></p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </section>
+
+          <!-- Recent Transactions Section -->
+          <section class="mb-8">
+            <div class="bg-white rounded-lg p-6 shadow-md">
+              <div class="flex justify-between items-center">
+                <h2 class="text-3xl font-bold mb-4 text-blue-700">
+                  Recent Transactions
+                </h2>
+                <button
+                  class="bg-blue-500 text-white px-4 py-2 rounded flex items-center shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200"
+                  id="download-transactions-button"
+                >
+                  <span class="material-icons text-lg md:text-xl lg:text-2xl"
+                    >download</span
+                  >
+                </button>
+              </div>
+              <ul id="transactions-list">
+                <li class="flex justify-between items-center p-3 border-b">
+                  <p></p>
+                  <p class="text-green-500 font-bold"></p>
+                  <p></p>
+                </li>
+                <li class="flex justify-between items-center p-3 border-b">
+                  <p></p>
+                  <p class="text-red-500 font-bold"></p>
+                  <p></p>
+                </li>
+                <!-- Add more transactions here -->
+              </ul>
+            </div>
+          </section>
+          <!-- Add Transaction Form -->
+          <section id="add-transaction" class="mb-8">
+            <div class="bg-white rounded-lg p-6 shadow-md">
+              <h2 class="text-3xl font-bold mb-4 text-blue-700">
+                Add Transaction
+              </h2>
+              <form id="add-transaction-form">
+                <div class="mb-4">
+                  <label class="block mb-2">Transaction Type</label>
+                  <select
+                    name="transaction-type"
+                    class="w-full p-2 border rounded"
+                  >
+                    <option>Income</option>
+                    <option>Expense</option>
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label class="block mb-2">Amount</label>
+                  <div class="flex">
+                    <select name="currency" class="p-2 border rounded mr-2">
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="SAR">SAR</option>
+                      <option value="PKR">PKR</option>
+                    </select>
+                    <input
+                      type="number"
+                      class="w-full p-2 border rounded"
+                      placeholder="Enter amount"
+                    />
+                  </div>
+                </div>
+                <div class="mb-4">
+                  <label class="block mb-2">Category</label>
+                  <select name="category" class="w-full p-2 border rounded">
+                    <option>Food</option>
+                    <option>Rent</option>
+                    <option>Salary</option>
+                    <option>Entertainment</option>
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label class="block mb-2">Date</label>
+                  <input
+                    type="date"
+                    class="w-full p-2 border rounded"
+                    placeholder="Select date"
+                  />
+                </div>
+                <div class="mb-4">
+                  <label class="block mb-2">Description</label>
+                  <textarea
+                    class="w-full p-2 border rounded"
+                    placeholder="Enter description"
+                  ></textarea>
+                </div>
+                <button
+                  type="submit"
+                  class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded shadow-md"
+                >
+                  Add Transaction
+                </button>
+              </form>
+            </div>
+          </section>
+
+          <!-- Category Management system -->
+
+          <section id="category-management" class="mb-8">
+            <div class="bg-white rounded-lg p-6 shadow-md">
+              <h2 class="text-3xl font-bold mb-4 text-blue-700">
+                Category Management
+              </h2>
+              <div class="mb-4">
+                <label class="block mb-2">Add New Category</label>
+                <input
+                  id="new-category-input"
+                  type="text"
+                  class="w-full p-2 border rounded"
+                  placeholder="Enter new category"
+                />
+                <button
+                  id="add-category-button"
+                  class="mt-2 bg-blue-500 text-white px-4 py-2 rounded shadow-md"
+                >
+                  Add Category
+                </button>
+              </div>
+              <ul class="mt-6 space-y-4" id="category-management-list">
+                <!-- Dynamically populated categories go here -->
+              </ul>
+            </div>
+          </section>
+
+          <!-- Budget Tracking Section -->
+          <section id="budget-tracking" class="mb-8">
+            <div class="bg-white rounded-lg p-6 shadow-md">
+              <h2 class="text-3xl font-bold mb-4 text-blue-700">
+                Budget Tracking
+              </h2>
+              <div class="mb-4">
+                <label class="block mb-2">Set Monthly Budget</label>
+                <input
+                  type="number"
+                  class="w-full p-2 border rounded"
+                  placeholder="Enter budget amount"
+                />
+                <button
+                  class="mt-2 bg-blue-500 text-white px-4 py-2 rounded shadow-md"
+                >
+                  Set Budget
+                </button>
+              </div>
+              <div class="mt-4">
+                <p class="text-red-500 font-semibold">
+                  Alert: You are nearing your budget limit!
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Financial Summary Section -->
+          <section id="financial-summary" class="mb-8">
+            <div class="bg-white rounded-lg p-6 shadow-md">
+              <h2 class="text-3xl font-bold mb-4 text-blue-700">
+                Financial Summary
+              </h2>
+              <ul class="grid grid-cols-2 gap-4">
+                <li class="bg-blue-50 p-4 rounded-lg shadow">
+                  <h3 class="text-xl font-bold">Highest Expense Category</h3>
+                  <p class="text-red-500">Rent - $800</p>
+                </li>
+                <li class="bg-blue-50 p-4 rounded-lg shadow">
+                  <h3 class="text-xl font-bold">Most Frequent Expense</h3>
+                  <p class="text-blue-500">Groceries - 5 times</p>
+                </li>
+                <li class="bg-blue-50 p-4 rounded-lg shadow">
+                  <h3 class="text-xl font-bold">Average Monthly Income</h3>
+                  <p class="text-green-500">$3,200</p>
+                </li>
+                <li class="bg-blue-50 p-4 rounded-lg shadow">
+                  <h3 class="text-xl font-bold">Average Monthly Expenses</h3>
+                  <p id="avg-monthly-expenses" class="text-red-500">$1,900</p>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- Monthly Summaries Section -->
+          <section id="monthly-summaries" class="mb-8">
+            <div class="bg-white rounded-lg p-6 shadow-md">
+              <h2 class="text-3xl font-bold mb-4 text-blue-700">
+                Monthly Summaries
+              </h2>
+              <!-- Monthly summaries will be dynamically inserted here -->
+              <div
+                id="monthly-summary-container"
+                class="grid grid-cols-1 lg:grid-cols-2 gap-4"
+              >
+                <!-- Dynamically generated summaries will be inserted here -->
+              </div>
+            </div>
+          </section>
+
+          <!-- Report Section -->
+          <section id="reports" class="mb-8">
+            <div class="bg-white rounded-lg p-6 shadow-md">
+              <h2 class="text-3xl font-bold mb-4 text-blue-700">Reports</h2>
+              <div class="mb-4">
+                <label class="block mb-2">Select Date Range</label>
+                <input
+                  id="start-date"
+                  type="date"
+                  class="p-2 border rounded mr-4"
+                />
+                <input id="end-date" type="date" class="p-2 border rounded" />
+                <button
+                  id="update-charts"
+                  class="mt-2 bg-blue-500 text-white px-4 py-2 rounded shadow-md ml-4"
+                >
+                  Update
+                </button>
+              </div>
+              <!-- Responsive Grid for Charts -->
+              <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Bar Chart Report -->
+                <div id="barChartContainer" class="flex justify-center">
+                  <canvas
+                    id="expenseBarChart"
+                    class="max-w-full h-auto"
+                  ></canvas>
+                </div>
+                <!-- Pie Chart Report -->
+                <div id="pieChartContainer" class="flex justify-center">
+                  <canvas
+                    id="expensePieChart"
+                    class="max-w-full h-auto"
+                  ></canvas>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <!-- JavaScript for Hamburger Menu -->
+    <script>
+      const hamburgerButton = document.getElementById("hamburgerButton");
+      const sidebar = document.getElementById("sidebar");
+
+      hamburgerButton.addEventListener("click", () => {
+        sidebar.classList.toggle("-translate-x-full");
+      });
+    </script>
+    <script>
+      document.querySelectorAll("a.smooth-scroll").forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          document.querySelector(this.getAttribute("href")).scrollIntoView({
+            behavior: "smooth",
+          });
+        });
+      });
+    </script>
+
+    <!-- Luxon for date handling in Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1/build/global/luxon.min.js"></script>
+
+    <!-- Chart.js and Luxon Adapter -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
+
+    <!-- jsPDF and jsPDF-Autotable for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- Custom Script Files -->
+
+    <!-- Transaction Management -->
+    <script type="module" src="./transaction-management.js"></script>
+
+    <!-- Category Management -->
+    <script type="module" src="./category-management.js"></script>
+
+    <!-- Chart Management (handles the Pie and Line charts) -->
+    <script type="module" src="./chart-management.js"></script>
+
+    <!-- Loader script (if any) -->
+    <script src="loader.js"></script>
+  </body>
+</html>
