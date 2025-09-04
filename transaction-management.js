@@ -9,6 +9,7 @@ import {
   removeTransaction,
   saveMonthlySummary,
   loadMonthlySummaries,
+  loadCategories,
 } from "./localStorage.js";
 import { updateSummaries } from "./summary-management.js";
 import { triggerChartUpdates } from "./chart-management.js";
@@ -47,6 +48,8 @@ const currencySelect = addTransactionForm.querySelector(
 const amountInput = addTransactionForm.querySelector('input[type="number"]'); // Amount input
 const conversionDisplay = document.createElement("p"); // Display for converted amount
 conversionDisplay.classList.add("text-sm", "text-gray-600", "mt-1");
+const searchInput = document.getElementById("transaction-search");
+const budgetProgress = document.getElementById("budget-progress");
 
 // Append the conversion display under amount input
 amountInput.parentElement.appendChild(conversionDisplay);
@@ -65,6 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   alertMessage.textContent = "";
   updateBalanceDisplay();
   renderTransactions();
+
   updateSummaries();
 
   // Attach event listener for download button
@@ -94,6 +98,14 @@ function updateBalanceDisplay() {
   totalIncomeElem.textContent = `₨:${totalIncome.toFixed(1)}`;
   totalExpensesElem.textContent = `₨:${totalExpenses.toFixed(1)}`;
   currentBalanceElem.textContent = `₨:${currentBalance.toFixed(1)}`;
+  updateBudgetProgress();
+}
+
+function updateBudgetProgress() {
+  const percent = budgetAmount
+    ? Math.min((totalExpenses / budgetAmount) * 100, 100)
+    : 0;
+  if (budgetProgress) budgetProgress.style.width = `${percent}%`;
 }
 
 // Function to reset monthly data and save the past month's summary
@@ -119,11 +131,7 @@ function resetMonthlyDataIfNewMonth() {
   localStorage.setItem("lastMonth", currentMonth);
 }
 
-// Render all transactions to the UI
-function renderTransactions() {
-  transactionsList.innerHTML = "";
-  transactions.forEach((transaction) => addTransactionToUI(transaction));
-}
+
 
 // Function to add transaction to the UI
 function addTransactionToUI(transaction) {
@@ -193,10 +201,7 @@ function deleteTransaction(transaction) {
   saveTransaction(totalIncome, totalExpenses);
   saveTransactionDetails(transactions);
   updateBalanceDisplay();
-  triggerChartUpdates();
-  updateSummaries();
-  renderTransactions();
-}
+
 
 // Function to handle deleting a transaction
 function handleDeleteTransaction(transaction) {
@@ -248,6 +253,7 @@ function handleEditTransaction(transaction) {
 setBudgetButton.addEventListener("click", () => {
   budgetAmount = setBudget(setBudgetInput, alertMessage, budgetDisplay, Swal);
   saveBudget(budgetAmount); // Save budget to local storage
+  updateBudgetProgress();
 });
 
 addTransactionForm.addEventListener("submit", async (e) => {
@@ -262,11 +268,11 @@ addTransactionForm.addEventListener("submit", async (e) => {
   const category = categorySelect.value;
   const currency = currencySelect.value;
 
-  if (!amount || !date) {
+  if (!amount || amount <= 0 || !date || !description) {
     Swal.fire({
       icon: "warning",
       title: "Missing Info",
-      text: "Please add an amount and date to continue.",
+      text: "Please complete all fields with valid data.",
       confirmButtonText: "OK",
     });
     return;
@@ -290,10 +296,8 @@ addTransactionForm.addEventListener("submit", async (e) => {
     currency,
   };
 
-  transactions.push(newTransaction);
-  saveTransactionDetails(transactions);
-  addTransactionToUI(newTransaction);
   triggerChartUpdates();
+  renderTransactions(searchInput ? searchInput.value.toLowerCase() : "");
 
   if (updateExpenses(finalAmount, transactionType)) {
     Swal.fire({
