@@ -68,11 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   alertMessage.textContent = "";
   updateBalanceDisplay();
   renderTransactions();
-  if (searchInput) {
-    searchInput.addEventListener("input", () =>
-      renderTransactions(searchInput.value.toLowerCase())
-    );
-  }
+
   updateSummaries();
 
   // Attach event listener for download button
@@ -135,30 +131,7 @@ function resetMonthlyDataIfNewMonth() {
   localStorage.setItem("lastMonth", currentMonth);
 }
 
-function recalcMonthlySummary(month) {
-  const monthTransactions = transactions.filter(
-    (t) => t.date.slice(0, 7) === month
-  );
-  const summary = { totalIncome: 0, totalExpenses: 0, transactions: [] };
-  monthTransactions.forEach((t) => {
-    if (t.type === "Income") summary.totalIncome += t.amount;
-    else summary.totalExpenses += t.amount;
-    summary.transactions.push(t);
-  });
-  saveMonthlySummary(month, summary);
-}
 
-// Render all transactions to the UI
-function renderTransactions(filter = "") {
-  transactionsList.innerHTML = "";
-  transactions
-    .filter(
-      (t) =>
-        t.description.toLowerCase().includes(filter) ||
-        t.category.toLowerCase().includes(filter)
-    )
-    .forEach((transaction) => addTransactionToUI(transaction));
-}
 
 // Function to add transaction to the UI
 function addTransactionToUI(transaction) {
@@ -228,11 +201,7 @@ function deleteTransaction(transaction) {
   saveTransaction(totalIncome, totalExpenses);
   saveTransactionDetails(transactions);
   updateBalanceDisplay();
-  recalcMonthlySummary(transaction.date.slice(0, 7));
-  triggerChartUpdates();
-  updateSummaries();
-  renderTransactions(searchInput ? searchInput.value.toLowerCase() : "");
-}
+
 
 // Function to handle deleting a transaction
 function handleDeleteTransaction(transaction) {
@@ -326,27 +295,7 @@ addTransactionForm.addEventListener("submit", async (e) => {
     category,
     currency,
   };
-  if (transactionType === "Expense") {
-    const categories = loadCategories();
-    const cat = categories.find((c) => c.name === category);
-    if (cat && cat.budget > 0) {
-      const spent = transactions
-        .filter((t) => t.type === "Expense" && t.category === category)
-        .reduce((sum, t) => sum + t.amount, 0);
-      if (spent + finalAmount > cat.budget) {
-        Swal.fire({
-          icon: "warning",
-          title: "Category Budget Exceeded",
-          text: `This expense surpasses the budget for ${category}.`,
-          confirmButtonText: "OK",
-        });
-      }
-    }
-  }
 
-  transactions.push(newTransaction);
-  saveTransactionDetails(transactions);
-  recalcMonthlySummary(date.slice(0, 7));
   triggerChartUpdates();
   renderTransactions(searchInput ? searchInput.value.toLowerCase() : "");
 
