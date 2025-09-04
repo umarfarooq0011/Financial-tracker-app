@@ -85,56 +85,40 @@ export function updateSummaries() {
   // Current month in "YYYY-MM" format
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-  // Load past monthly summaries from local storage
-  const pastSummaries = loadMonthlySummaries();
+  // Load precomputed monthly summaries
+  const monthlySummaries = loadMonthlySummaries();
 
   // Clear the existing summary container
   monthlySummaryContainer.innerHTML = "";
 
-  // Display past monthly summaries
-  Object.keys(pastSummaries).forEach((month) => {
-    const { avgIncome, avgExpenses } = pastSummaries[month];
-
+  // Display monthly summaries with drill-down
+  Object.keys(monthlySummaries).forEach((month) => {
+    const data = monthlySummaries[month];
     const monthSummaryElem = document.createElement("div");
     monthSummaryElem.classList.add("bg-blue-50", "p-4", "rounded-lg", "shadow");
     monthSummaryElem.innerHTML = `
       <h3 class="text-lg font-semibold mt-4">${month}</h3>
-      <p class="text-green-500">Average Income: ₨${avgIncome}</p>
-      <p class="text-red-500">Average Expenses: ₨${avgExpenses}</p>
+      <p class="text-green-500">Total Income: ₨${data.totalIncome.toFixed(2)}</p>
+      <p class="text-red-500">Total Expenses: ₨${data.totalExpenses.toFixed(2)}</p>
+      <button class="text-blue-600 underline view-details">View Details</button>
+      <ul class="hidden mt-2 details-list"></ul>
     `;
 
-    // Append the summary section for this month
-    monthlySummaryContainer.appendChild(monthSummaryElem);
-  });
+    monthSummaryElem
+      .querySelector(".view-details")
+      .addEventListener("click", () => {
+        const list = monthSummaryElem.querySelector(".details-list");
+        if (list.classList.contains("hidden")) {
+          list.innerHTML = data.transactions
+            .map(
+              (t) =>
+                `<li>${t.date}: ${t.description} (${t.category}) - ₨${t.amount}</li>`
+            )
+            .join("");
+        }
+        list.classList.toggle("hidden");
+      });
 
-  // Group transactions by month (YYYY-MM)
-  const groupedTransactions = transactions.reduce((acc, transaction) => {
-    const transactionMonth = transaction.date.slice(0, 7); // Get "YYYY-MM" format
-    if (!acc[transactionMonth]) {
-      acc[transactionMonth] = { income: 0, expenses: 0 };
-    }
-    if (transaction.type === "Income") {
-      acc[transactionMonth].income += transaction.amount;
-    } else if (transaction.type === "Expense") {
-      acc[transactionMonth].expenses += transaction.amount;
-    }
-    return acc;
-  }, {});
-
-  // Loop through each month and create a summary (only one section per month)
-  Object.keys(groupedTransactions).forEach((transactionMonth) => {
-    const { income, expenses } = groupedTransactions[transactionMonth];
-
-    // Create a new section for each month (aggregating all transactions in the same month)
-    const monthSummaryElem = document.createElement("div");
-    monthSummaryElem.classList.add("bg-blue-50", "p-4", "rounded-lg", "shadow");
-    monthSummaryElem.innerHTML = `
-      <h3 class="text-lg font-semibold mt-4">${transactionMonth}</h3>
-      <p class="text-green-500">Total Income: ₨${income.toFixed(2)}</p>
-      <p class="text-red-500">Total Expenses: ₨${expenses.toFixed(2)}</p>
-    `;
-
-    // Append the summary section for this month
     monthlySummaryContainer.appendChild(monthSummaryElem);
   });
 

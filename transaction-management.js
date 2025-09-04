@@ -9,6 +9,7 @@ import {
   removeTransaction,
   saveMonthlySummary,
   loadMonthlySummaries,
+  loadCategories,
 } from "./localStorage.js";
 import { updateSummaries } from "./summary-management.js";
 import { triggerChartUpdates } from "./chart-management.js";
@@ -23,6 +24,7 @@ import {
 let budgetAmount = loadBudget();
 let { totalIncome, totalExpenses } = loadTransaction();
 let transactions = loadTransactionDetails();
+let transactionBeingEdited = null;
 
 // DOM Elements
 const setBudgetInput = document.querySelector(
@@ -46,6 +48,8 @@ const currencySelect = addTransactionForm.querySelector(
 const amountInput = addTransactionForm.querySelector('input[type="number"]'); // Amount input
 const conversionDisplay = document.createElement("p"); // Display for converted amount
 conversionDisplay.classList.add("text-sm", "text-gray-600", "mt-1");
+const searchInput = document.getElementById("transaction-search");
+const budgetProgress = document.getElementById("budget-progress");
 
 // Append the conversion display under amount input
 amountInput.parentElement.appendChild(conversionDisplay);
@@ -63,9 +67,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   budgetDisplay.textContent = `Budget Set: ₨${budgetAmount}`;
   alertMessage.textContent = "";
   updateBalanceDisplay();
-  transactions.forEach(({ type, amount, date, description, category }) => {
-    addTransactionToUI(type, amount, date, description, category);
-  });
+  renderTransactions();
+  if (searchInput) {
+    searchInput.addEventListener("input", () =>
+      renderTransactions(searchInput.value.toLowerCase())
+    );
+  }
   updateSummaries();
 
   // Attach event listener for download button
@@ -95,6 +102,14 @@ function updateBalanceDisplay() {
   totalIncomeElem.textContent = `₨:${totalIncome.toFixed(1)}`;
   totalExpensesElem.textContent = `₨:${totalExpenses.toFixed(1)}`;
   currentBalanceElem.textContent = `₨:${currentBalance.toFixed(1)}`;
+  updateBudgetProgress();
+}
+
+function updateBudgetProgress() {
+  const percent = budgetAmount
+    ? Math.min((totalExpenses / budgetAmount) * 100, 100)
+    : 0;
+  if (budgetProgress) budgetProgress.style.width = `${percent}%`;
 }
 
 // Function to reset monthly data and save the past month's summary
@@ -120,14 +135,35 @@ function resetMonthlyDataIfNewMonth() {
   localStorage.setItem("lastMonth", currentMonth);
 }
 
+function recalcMonthlySummary(month) {
+  const monthTransactions = transactions.filter(
+    (t) => t.date.slice(0, 7) === month
+  );
+  const summary = { totalIncome: 0, totalExpenses: 0, transactions: [] };
+  monthTransactions.forEach((t) => {
+    if (t.type === "Income") summary.totalIncome += t.amount;
+    else summary.totalExpenses += t.amount;
+    summary.transactions.push(t);
+  });
+  saveMonthlySummary(month, summary);
+}
+
+// Render all transactions to the UI
+function renderTransactions(filter = "") {
+  transactionsList.innerHTML = "";
+  transactions
+    .filter(
+      (t) =>
+        t.description.toLowerCase().includes(filter) ||
+        t.category.toLowerCase().includes(filter)
+    )
+    .forEach((transaction) => addTransactionToUI(transaction));
+}
+
 // Function to add transaction to the UI
-function addTransactionToUI(
-  transactionType,
-  amount,
-  date,
-  description,
-  category
-) {
+function addTransactionToUI(transaction) {
+  const { type: transactionType, amount, date, description, category } =
+    transaction;
   const listItem = document.createElement("li");
   listItem.classList.add(
     "flex", // Flex layout
@@ -143,26 +179,28 @@ function addTransactionToUI(
     "mb-4" // Add margin between list items
   );
 
+  const editButton = document.createElement("button");
+  editButton.innerHTML =
+    '<span class="material-icons text-blue-500 cursor-pointer">edit</span>';
+  editButton.classList.add(
+    "mt-4",
+    "sm:mt-0",
+    "ml-0",
+    "sm:ml-4"
+  );
+  editButton.addEventListener("click", () => handleEditTransaction(transaction));
+
   const deleteButton = document.createElement("button");
   deleteButton.innerHTML =
     '<span class="material-icons text-red-500 cursor-pointer">delete</span>';
   deleteButton.classList.add(
-    "mt-4", // Add margin-top for mobile view
-    "sm:mt-0", // Remove margin-top in larger view
-    "ml-0", // Remove left margin on mobile view
-    "sm:ml-4" // Add left margin in larger view
+    "mt-4",
+    "sm:mt-0",
+    "ml-0",
+    "sm:ml-4"
   );
-
-  // Add delete button functionality
   deleteButton.addEventListener("click", () =>
-    handleDeleteTransaction(
-      listItem,
-      amount,
-      transactionType,
-      date,
-      description,
-      category
-    )
+    handleDeleteTransaction(transaction)
   );
 
   listItem.innerHTML = `
@@ -175,19 +213,29 @@ function addTransactionToUI(
     <p>${date}</p>
   `;
 
+  listItem.appendChild(editButton);
   listItem.appendChild(deleteButton);
   transactionsList.appendChild(listItem);
 }
 
+function deleteTransaction(transaction) {
+  if (transaction.type === "Income") totalIncome -= transaction.amount;
+  else totalExpenses -= transaction.amount;
+
+  removeTransaction(transaction);
+  transactions = transactions.filter((t) => t !== transaction);
+
+  saveTransaction(totalIncome, totalExpenses);
+  saveTransactionDetails(transactions);
+  updateBalanceDisplay();
+  recalcMonthlySummary(transaction.date.slice(0, 7));
+  triggerChartUpdates();
+  updateSummaries();
+  renderTransactions(searchInput ? searchInput.value.toLowerCase() : "");
+}
+
 // Function to handle deleting a transaction
-function handleDeleteTransaction(
-  listItem,
-  amount,
-  type,
-  date,
-  description,
-  category
-) {
+function handleDeleteTransaction(transaction) {
   Swal.fire({
     title: "Are you sure?",
     text: "Do you really want to delete this transaction? This action cannot be undone.",
@@ -209,44 +257,34 @@ function handleDeleteTransaction(
     cancelButtonText: "No, keep it",
   }).then((result) => {
     if (result.isConfirmed) {
-      // Update totalIncome or totalExpenses accordingly
-      if (type === "Income") totalIncome -= amount;
-      else totalExpenses -= amount;
-
-      // Remove the transaction from the DOM
-      listItem.remove();
-
-      // Update the balance display
-      updateBalanceDisplay();
-
-      // Remove the transaction from local storage and update the transactions list
-      transactions = transactions.filter(
-        (transaction) =>
-          !(
-            transaction.type === type &&
-            transaction.amount === amount &&
-            transaction.date === date &&
-            transaction.description === description &&
-            transaction.category === category
-          )
-      );
-      saveTransactionDetails(transactions);
-
-      // Update income and expenses in local storage
-      saveTransaction(totalIncome, totalExpenses);
-
-      // Update summaries
-      updateSummaries();
-
+      deleteTransaction(transaction);
       console.log("Transaction removed successfully.");
     }
   });
+}
+
+// Function to handle editing a transaction
+function handleEditTransaction(transaction) {
+  const typeSelect = addTransactionForm.querySelector(
+    "select[name='transaction-type']"
+  );
+  typeSelect.value = transaction.type;
+  amountInput.value = transaction.amount;
+  addTransactionForm.querySelector('input[type="date"]').value =
+    transaction.date;
+  descriptionTextarea.value = transaction.description;
+  categorySelect.value = transaction.category;
+  if (transaction.currency) {
+    currencySelect.value = transaction.currency;
+  }
+  transactionBeingEdited = transaction;
 }
 
 // Event Listeners
 setBudgetButton.addEventListener("click", () => {
   budgetAmount = setBudget(setBudgetInput, alertMessage, budgetDisplay, Swal);
   saveBudget(budgetAmount); // Save budget to local storage
+  updateBudgetProgress();
 });
 
 addTransactionForm.addEventListener("submit", async (e) => {
@@ -261,32 +299,56 @@ addTransactionForm.addEventListener("submit", async (e) => {
   const category = categorySelect.value;
   const currency = currencySelect.value;
 
-  if (!amount || !date) {
+  if (!amount || amount <= 0 || !date || !description) {
     Swal.fire({
       icon: "warning",
       title: "Missing Info",
-      text: "Please add an amount and date to continue.",
+      text: "Please complete all fields with valid data.",
       confirmButtonText: "OK",
     });
     return;
+  }
+
+  if (transactionBeingEdited) {
+    deleteTransaction(transactionBeingEdited);
+    transactionBeingEdited = null;
   }
 
   // Convert amount to PKR before adding transaction
   const convertedAmount = await convertCurrency(amount, currency, "PKR");
   const finalAmount = convertedAmount ? parseFloat(convertedAmount) : amount;
 
-  addTransactionToUI(transactionType, finalAmount, date, description, category);
-
-  transactions.push({
+  const newTransaction = {
     type: transactionType,
     amount: finalAmount,
     date,
     description,
     category,
     currency,
-  });
+  };
+  if (transactionType === "Expense") {
+    const categories = loadCategories();
+    const cat = categories.find((c) => c.name === category);
+    if (cat && cat.budget > 0) {
+      const spent = transactions
+        .filter((t) => t.type === "Expense" && t.category === category)
+        .reduce((sum, t) => sum + t.amount, 0);
+      if (spent + finalAmount > cat.budget) {
+        Swal.fire({
+          icon: "warning",
+          title: "Category Budget Exceeded",
+          text: `This expense surpasses the budget for ${category}.`,
+          confirmButtonText: "OK",
+        });
+      }
+    }
+  }
+
+  transactions.push(newTransaction);
   saveTransactionDetails(transactions);
+  recalcMonthlySummary(date.slice(0, 7));
   triggerChartUpdates();
+  renderTransactions(searchInput ? searchInput.value.toLowerCase() : "");
 
   if (updateExpenses(finalAmount, transactionType)) {
     Swal.fire({
