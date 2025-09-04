@@ -23,6 +23,7 @@ import {
 let budgetAmount = loadBudget();
 let { totalIncome, totalExpenses } = loadTransaction();
 let transactions = loadTransactionDetails();
+let transactionBeingEdited = null;
 
 // DOM Elements
 const setBudgetInput = document.querySelector(
@@ -63,9 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   budgetDisplay.textContent = `Budget Set: ₨${budgetAmount}`;
   alertMessage.textContent = "";
   updateBalanceDisplay();
-  transactions.forEach(({ type, amount, date, description, category }) => {
-    addTransactionToUI(type, amount, date, description, category);
-  });
+  renderTransactions();
   updateSummaries();
 
   // Attach event listener for download button
@@ -120,14 +119,16 @@ function resetMonthlyDataIfNewMonth() {
   localStorage.setItem("lastMonth", currentMonth);
 }
 
+// Render all transactions to the UI
+function renderTransactions() {
+  transactionsList.innerHTML = "";
+  transactions.forEach((transaction) => addTransactionToUI(transaction));
+}
+
 // Function to add transaction to the UI
-function addTransactionToUI(
-  transactionType,
-  amount,
-  date,
-  description,
-  category
-) {
+function addTransactionToUI(transaction) {
+  const { type: transactionType, amount, date, description, category } =
+    transaction;
   const listItem = document.createElement("li");
   listItem.classList.add(
     "flex", // Flex layout
@@ -143,26 +144,28 @@ function addTransactionToUI(
     "mb-4" // Add margin between list items
   );
 
+  const editButton = document.createElement("button");
+  editButton.innerHTML =
+    '<span class="material-icons text-blue-500 cursor-pointer">edit</span>';
+  editButton.classList.add(
+    "mt-4",
+    "sm:mt-0",
+    "ml-0",
+    "sm:ml-4"
+  );
+  editButton.addEventListener("click", () => handleEditTransaction(transaction));
+
   const deleteButton = document.createElement("button");
   deleteButton.innerHTML =
     '<span class="material-icons text-red-500 cursor-pointer">delete</span>';
   deleteButton.classList.add(
-    "mt-4", // Add margin-top for mobile view
-    "sm:mt-0", // Remove margin-top in larger view
-    "ml-0", // Remove left margin on mobile view
-    "sm:ml-4" // Add left margin in larger view
+    "mt-4",
+    "sm:mt-0",
+    "ml-0",
+    "sm:ml-4"
   );
-
-  // Add delete button functionality
   deleteButton.addEventListener("click", () =>
-    handleDeleteTransaction(
-      listItem,
-      amount,
-      transactionType,
-      date,
-      description,
-      category
-    )
+    handleDeleteTransaction(transaction)
   );
 
   listItem.innerHTML = `
@@ -175,19 +178,28 @@ function addTransactionToUI(
     <p>${date}</p>
   `;
 
+  listItem.appendChild(editButton);
   listItem.appendChild(deleteButton);
   transactionsList.appendChild(listItem);
 }
 
+function deleteTransaction(transaction) {
+  if (transaction.type === "Income") totalIncome -= transaction.amount;
+  else totalExpenses -= transaction.amount;
+
+  removeTransaction(transaction);
+  transactions = transactions.filter((t) => t !== transaction);
+
+  saveTransaction(totalIncome, totalExpenses);
+  saveTransactionDetails(transactions);
+  updateBalanceDisplay();
+  triggerChartUpdates();
+  updateSummaries();
+  renderTransactions();
+}
+
 // Function to handle deleting a transaction
-function handleDeleteTransaction(
-  listItem,
-  amount,
-  type,
-  date,
-  description,
-  category
-) {
+function handleDeleteTransaction(transaction) {
   Swal.fire({
     title: "Are you sure?",
     text: "Do you really want to delete this transaction? This action cannot be undone.",
@@ -209,38 +221,27 @@ function handleDeleteTransaction(
     cancelButtonText: "No, keep it",
   }).then((result) => {
     if (result.isConfirmed) {
-      // Update totalIncome or totalExpenses accordingly
-      if (type === "Income") totalIncome -= amount;
-      else totalExpenses -= amount;
-
-      // Remove the transaction from the DOM
-      listItem.remove();
-
-      // Update the balance display
-      updateBalanceDisplay();
-
-      // Remove the transaction from local storage and update the transactions list
-      transactions = transactions.filter(
-        (transaction) =>
-          !(
-            transaction.type === type &&
-            transaction.amount === amount &&
-            transaction.date === date &&
-            transaction.description === description &&
-            transaction.category === category
-          )
-      );
-      saveTransactionDetails(transactions);
-
-      // Update income and expenses in local storage
-      saveTransaction(totalIncome, totalExpenses);
-
-      // Update summaries
-      updateSummaries();
-
+      deleteTransaction(transaction);
       console.log("Transaction removed successfully.");
     }
   });
+}
+
+// Function to handle editing a transaction
+function handleEditTransaction(transaction) {
+  const typeSelect = addTransactionForm.querySelector(
+    "select[name='transaction-type']"
+  );
+  typeSelect.value = transaction.type;
+  amountInput.value = transaction.amount;
+  addTransactionForm.querySelector('input[type="date"]').value =
+    transaction.date;
+  descriptionTextarea.value = transaction.description;
+  categorySelect.value = transaction.category;
+  if (transaction.currency) {
+    currencySelect.value = transaction.currency;
+  }
+  transactionBeingEdited = transaction;
 }
 
 // Event Listeners
@@ -271,21 +272,27 @@ addTransactionForm.addEventListener("submit", async (e) => {
     return;
   }
 
+  if (transactionBeingEdited) {
+    deleteTransaction(transactionBeingEdited);
+    transactionBeingEdited = null;
+  }
+
   // Convert amount to PKR before adding transaction
   const convertedAmount = await convertCurrency(amount, currency, "PKR");
   const finalAmount = convertedAmount ? parseFloat(convertedAmount) : amount;
 
-  addTransactionToUI(transactionType, finalAmount, date, description, category);
-
-  transactions.push({
+  const newTransaction = {
     type: transactionType,
     amount: finalAmount,
     date,
     description,
     category,
     currency,
-  });
+  };
+
+  transactions.push(newTransaction);
   saveTransactionDetails(transactions);
+  addTransactionToUI(newTransaction);
   triggerChartUpdates();
 
   if (updateExpenses(finalAmount, transactionType)) {
